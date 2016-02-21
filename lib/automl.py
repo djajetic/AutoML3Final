@@ -60,7 +60,7 @@ def predict (LD, output_dir, basename):
 		
 	if LD.info['name']== 'dionis': 
 		Lest = 600 #600 will consume cca 250 GB of RAM, use 50 for similar result
-		Lest = 50
+		#Lest = 50
 		
 		model = ensemble.RandomForestClassifier( n_jobs=-1, n_estimators=Lest, random_state=0)
 		model.fit(X_train, Y_train)	
