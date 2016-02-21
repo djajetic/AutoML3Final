@@ -1,4 +1,4 @@
-#Damir Jajetic, 2015, MIT licence
+#Damir Jajetic, 2016, MIT licence
 
 def predict (LD, output_dir, basename):
 	import copy
@@ -26,63 +26,165 @@ def predict (LD, output_dir, basename):
 	
 
 	import xgboost as xgb
-	if LD.info['name']== 'albert':
-		model = xgb.XGBClassifier(max_depth=6, learning_rate=0.05, n_estimators=1800, silent=True, 
-				objective='binary:logistic', nthread=6, gamma=0.6, 
-				min_child_weight=0.7, max_delta_step=0, subsample=1, 
-				colsample_bytree=1, base_score=0.5, seed=0, missing=None)
+	if LD.info['name']== 'alexis':
 
-	if LD.info['name']== 'dilbert':
-		model = xgb.XGBClassifier(max_depth=4, learning_rate=0.1, n_estimators=1000, silent=True, 
-				objective='multi:softprob', nthread=-1, gamma=0, 
-				min_child_weight=0, max_delta_step=0, subsample=1, 
-				colsample_bytree=1, base_score=0.5, seed=0, missing=None)
-	if LD.info['name']== 'fabert':
-		model = xgb.XGBClassifier(max_depth=6, learning_rate=0.1, n_estimators=1200, silent=True, 
-				objective='multi:softprob', nthread=-1, gamma=0, 
-				min_child_weight=1, max_delta_step=0, subsample=1, 
-				colsample_bytree=1, base_score=0.5, seed=0, missing=None)
-	if LD.info['name']== 'robert':
-		model = xgb.XGBClassifier(max_depth=6, learning_rate=0.1, n_estimators=600, silent=True, 
-				objective='multi:softprob', nthread=-1, gamma=0, 
-				min_child_weight=1, max_delta_step=0, subsample=1, 
-				colsample_bytree=1, base_score=0.5, seed=0, missing=None)
-	if LD.info['name']== 'volkert':
-		from sklearn import  ensemble, preprocessing
+		model = ensemble.RandomForestClassifier(max_depth=140, n_estimators=1800, n_jobs=-1, random_state=0, verbose=0, warm_start=True)
+		model2 = ensemble.RandomForestClassifier(max_depth=140, n_estimators=1800, n_jobs=-1, random_state=1, verbose=0, warm_start=True)
+		model.fit(X_train, Y_train)	
+		model2.fit(X_train, Y_train)
 		
-		p = preprocessing.PolynomialFeatures()
-		prep = ensemble.RandomForestRegressor(n_estimators=24, n_jobs=-1, random_state=0, verbose=1)
+		preds_valid0 = model.predict_proba(X_valid)
+		preds_test0 = model.predict_proba(X_test)
 		
-		prep.fit(Xta,Y_train)		
-		Xta = Xta [:, prep.feature_importances_.argsort()[-50:][::-1]]
-		Xtv = Xtv [:, prep.feature_importances_.argsort()[-50:][::-1]]
-		Xts = Xts [:, prep.feature_importances_.argsort()[-50:][::-1]]
+		preds_valid2 = model2.predict_proba(X_valid)
+		preds_test2 = model2.predict_proba(X_test)
+		
+		preds_valid0 = np.array(preds_valid0)
+		preds_valid2 = np.array(preds_valid2)
+		
+		preds_test0 = np.array(preds_test0)
+		preds_test2 = np.array(preds_test2)
 		
 		
-		Xta = p.fit_transform(Xta)
-		Xtv = p.fit_transform(Xtv)
-		Xts = p.fit_transform(Xts)
+		preds_valid = (preds_valid0 + preds_valid2)/2
+		preds_test = (preds_test0 + preds_test2)/2
 		
-		prep.fit(Xta,Y_train)		
-		Xta = Xta [:, prep.feature_importances_.argsort()[-800:][::-1]]
-		Xtv = Xtv [:, prep.feature_importances_.argsort()[-800:][::-1]]
-		Xts = Xts [:, prep.feature_importances_.argsort()[-800:][::-1]]
-							
-		X_train = np.hstack([X_train, Xta])
-		X_valid = np.hstack([X_valid, Xtv])
-		X_test = np.hstack([X_test, Xts])
 		
-		model = xgb.XGBClassifier(max_depth=6, learning_rate=0.1, n_estimators=350, silent=True, 
-				objective='multi:softprob', nthread=-1, gamma=0, 
-				min_child_weight=1, max_delta_step=0, subsample=1, 
-				colsample_bytree=1, base_score=0.5, seed=0, missing=None)
+		preds_valid = preds_valid[:, :, 1]
+		preds_valid = preds_valid.T
 		
+		
+		preds_test = preds_test[:, :, 1]
+		preds_test = preds_test.T
+		
+		
+	if LD.info['name']== 'dionis': 
+		Lest = 600 #600 will consume cca 250 GB of RAM, use 50 for similar result
+		Lest = 50
+		
+		model = ensemble.RandomForestClassifier( n_jobs=-1, n_estimators=Lest, random_state=0)
+		model.fit(X_train, Y_train)	
+		preds_valid0 = model.predict_proba(X_valid)
+		preds_test0 = model.predict_proba(X_test)
 
-	model.fit(X_train, Y_train)
+		model = ensemble.RandomForestClassifier( n_jobs=-1, n_estimators=Lest, random_state=1)
+		model.fit(X_train, Y_train)	
+		preds_valid1 = model.predict_proba(X_valid)
+		preds_test1 = model.predict_proba(X_test)
+		
+		model = ensemble.RandomForestClassifier( n_jobs=-1, n_estimators=Lest, random_state=2)
+		model.fit(X_train, Y_train)	
+		preds_valid2 = model.predict_proba(X_valid)
+		preds_test2 = model.predict_proba(X_test)
+		
+		model = ensemble.RandomForestClassifier( n_jobs=-1, n_estimators=Lest, random_state=3)
+		model.fit(X_train, Y_train)	
+		preds_valid3 = model.predict_proba(X_valid)
+		preds_test3 = model.predict_proba(X_test)
+		
+		model = ensemble.RandomForestClassifier( n_jobs=-1, n_estimators=Lest, random_state=4)		
+		model.fit(X_train, Y_train)	
+		preds_valid4 = model.predict_proba(X_valid)
+		preds_test4 = model.predict_proba(X_test)
+		
+		preds_valid = (preds_valid0 + preds_valid1 + preds_valid2 + preds_valid3 + preds_valid4) # /5 should be included (bug)
+		preds_test = (preds_test0 + preds_test1 + preds_test2 + preds_test3 + preds_test4) # /5 should be included (bug)
 	
-	preds_valid = model.predict_proba(X_valid)
-	preds_test = model.predict_proba(X_test)
+	
+	if LD.info['name']== 'grigoris':
+		model = ensemble.RandomForestClassifier(criterion='entropy', max_features=0.05, max_depth=5, n_estimators=120, n_jobs=-1, random_state=0, verbose=0)
+		model2 = linear_model.LogisticRegression(penalty='l1', random_state=1, n_jobs=-1, C=0.008)
+		model3 = ensemble.RandomForestClassifier(criterion='entropy', max_features=0.05, max_depth=5, n_estimators=120, n_jobs=-1, random_state=1, verbose=0)
+		model4 = ensemble.RandomForestClassifier(criterion='entropy', max_features=0.05, max_depth=5, n_estimators=120, n_jobs=-1, random_state=2, verbose=0)
+		
+		preds_valid = np.zeros((X_valid.shape[0], Y_train.shape[1]))
+		preds_test = np.zeros((X_test.shape[0], Y_train.shape[1]))
+		for pyt in range(Y_train.shape[1]):
+			print pyt
+			ytp = Y_train[:, pyt]
+			model.fit(X_train, ytp)				
+			model2.fit(X_train, ytp)
+			model3.fit(X_train, ytp)
+			model4.fit(X_train, ytp)
+			
+			preds1v= model.predict_proba (X_valid)[:, 1]
+			preds2v= model2.predict_proba (X_valid)[:, 1]
+			preds3v= model3.predict_proba (X_valid)[:, 1]
+			preds4v= model4.predict_proba (X_valid)[:, 1]
+			predsv = (preds1v + preds2v + preds3v + preds4v)/4
+			preds_valid[:, pyt] = predsv
+			
+			preds1t= model.predict_proba (X_test)[:, 1]
+			preds2t= model2.predict_proba (X_test)[:, 1]
+			preds3t= model3.predict_proba (X_test)[:, 1]
+			preds4t= model4.predict_proba (X_test)[:, 1]
+			predst = (preds1t + preds2t + preds3t + preds4t)/4
+			preds_test[:, pyt] = predst
+
+			
+	if LD.info['name']== 'jannis':	
+		Xd = X_train[Y_train==0]
+		yd = Y_train[Y_train==0]
+	
+		for a in range(18):
+			X_train = np.vstack([X_train, Xd])
+			Y_train = np.hstack([Y_train, yd])
+		
+	
+		Xd = X_train[Y_train==2]
+		yd = Y_train[Y_train==2]
+	
+	
+		X_train = np.vstack([X_train, Xd])
+		Y_train = np.hstack([Y_train, yd])
+		
+		Y_train_raw = np.array(data_converter.convert_to_bin(Y_train, len(np.unique(Y_train)), False))
+		
+		
+		preds_valid = np.zeros((X_valid.shape[0], Y_train_raw.shape[1]))
+		preds_test = np.zeros((X_test.shape[0], Y_train_raw.shape[1]))
+		for pyt in range(Y_train_raw.shape[1]):
+			if pyt == 0:
+				Lbs = 0.2
+			else:
+				Lbs = 0.5
+
+			model = xgb.XGBClassifier(max_depth=30, learning_rate=0.05, n_estimators=100, silent=True, 
+				objective='binary:logistic', nthread=-1, gamma=0, 
+				min_child_weight=80, max_delta_step=1, subsample=1, 
+				colsample_bytree=1, base_score=Lbs, seed=0, missing=None)
+
+					
+			ytp = Y_train_raw[:, pyt]
+			model.fit(X_train, ytp)
+			
+			
+			preds1v= model.predict_proba (X_valid)[:, 1]
+			preds_valid[:, pyt] = preds1v 
+			
+			preds1t= model.predict_proba (X_test)[:, 1]
+			preds_test[:, pyt] = preds1t
+	
+		
+	if LD.info['name']== 'wallis':
+		model = naive_bayes.MultinomialNB(alpha=0.02)
+		
+		model2 = xgb.XGBClassifier(max_depth=5, learning_rate=0.05, n_estimators=1200, silent=True, 
+				objective='multi:softprob', nthread=-1, gamma=0, 
+				min_child_weight=1, max_delta_step=0, subsample=1, 
+				colsample_bytree=1, base_score=0.5, seed=0, missing=None)
 				
+	
+		model.fit(X_train, Y_train)
+		preds_valid1 = model.predict_proba(X_valid)		
+		preds_test1 = model.predict_proba(X_test)
+		
+		model2.fit(X_train, Y_train)
+		preds_valid2 = model2.predict_proba(X_valid)
+		preds_test2 = model2.predict_proba(X_test)
+				
+		preds_valid = (preds_valid1 +preds_valid2)/2
+		preds_test = (preds_test1 +preds_test2)/2				
 	
 	import data_io
 	if  LD.info['target_num']  == 1:
